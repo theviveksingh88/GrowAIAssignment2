@@ -24,7 +24,7 @@ noted where they apply: fine-tuning needs a Colab GPU, and the production API ne
 | 7 | [Assignment7_graphrag.ipynb](Assignment7_graphrag.ipynb) | GraphRAG knowledge explorer with Neo4j |
 | 8 | [Assignment8_Agent_with-Custom_Tools.ipynb](Assignment8_Agent_with-Custom_Tools.ipynb) | ReAct agent with custom tools & memory |
 | 9 | [Assignment9_multi_agent.py](Assignment9_multi_agent.py), [Assignment9_mcp_server.py](Assignment9_mcp_server.py), [Assignment9_mcp_client.py](Assignment9_mcp_client.py) | Multi-agent supervisor + MCP server/client |
-| 10 | [Assignment10_finetune.ipynb](Assignment10_finetune.ipynb), [Assignment10_dataset.py](Assignment10_dataset.py), [Assignment10_validate.py](Assignment10_validate.py), [Assignment10_compare.py](Assignment10_compare.py), [Assignment10_Modelfile](Assignment10_Modelfile) | LoRA fine-tuning → GGUF → Ollama |
+| 10 | [Assignment10_finetuned/](Assignment10_finetuned/) — notebook, dataset generator, validator, comparison script, Modelfile | LoRA fine-tuning → GGUF → Ollama |
 | 11 | [Assignment11_production_api/](Assignment11_production_api/) | Production FastAPI + Docker + evals |
 
 Supporting files:
@@ -32,8 +32,8 @@ Supporting files:
 - [ai_document.txt](ai_document.txt) — source corpus for the RAG assignment
 - [graph_document.txt](graph_document.txt) — corpus for GraphRAG (interconnected entities)
 - [ollama_benchmark_results.csv](ollama_benchmark_results.csv) — output of Assignment 3
-- `fastapi_dataset.json` — synthetic training data (generated, then filtered)
-- `fastapi_dataset.raw.json` — the unfiltered generation output, kept for comparison
+- `Assignment10_finetuned/fastapi_dataset.json` — synthetic training data (generated, then filtered)
+- [GrowAI_Runbook.pdf](GrowAI_Runbook.pdf) — step-by-step run guide for Assignments 7, 10 and 11
 
 ---
 
@@ -217,6 +217,9 @@ docker run --name neo4j -p 7474:7474 -p 7687:7687 \
   -e NEO4J_AUTH=neo4j/password123 neo4j:5-community
 ```
 
+`docker run` creates the container, so it only works once. Every run after that is
+`docker start neo4j`.
+
 Pipeline:
 
 1. **Paragraph chunking** of `graph_document.txt`
@@ -224,8 +227,9 @@ Pipeline:
    `enum`, producing `(entity1, relationship, entity2)` with entity types
 3. **Cypher ingest** — `MERGE` nodes and relationships; labels and relationship types are validated
    against allow-lists before interpolation, since Cypher cannot parameterise them
-4. **`graph_retrieval(query)`** — extract query entities, match them in the graph, traverse 1–2 hops
-5. **RRF fusion** of graph facts and vector chunks
+4. **`graph_retrieval(query)`** — extract query entities, match them in the graph, traverse the
+   neighbourhood and return each path as one **directed chain**
+5. **RRF fusion** of graph paths and vector chunks, rendered as two labelled sections
 6. **Comparison** of pure vector RAG vs GraphRAG on 5 multi-hop questions
 
 **On the corpus.** `graph_document.txt` deliberately separates facts about people from facts about
@@ -233,6 +237,21 @@ companies, so reasoning chains cross paragraph boundaries. This matters: in a fi
 chain sat inside one paragraph, vector search answered 4 of 5 questions on its own and GraphRAG
 showed no advantage. All five questions were then verified against plain vector search — none have
 the answer in their top-3 chunks.
+
+**On how paths are rendered — the change that mattered most.** Handing the model the same edges
+as separate sentences (`Zoho headquartered in Chennai.` / `Freshworks headquartered in Chennai.`
+/ `Freshworks founded by Girish Mathrubootham.`) leaves it to notice that they join at Chennai,
+and it consistently did not — questions 1 and 2 scored **0/3** each. Emitting each traversal as
+one pre-assembled directed chain instead:
+
+```
+Zoho -[headquartered in]-> Chennai <-[headquartered in]- Freshworks -[founded by]-> Girish Mathrubootham
+```
+
+took GraphRAG from **9/15 to 15/15** (3 trials × 5 questions), with vector RAG unchanged as the
+baseline. The arrows carry as much weight as the chain: a path can be walked against an edge's
+stored direction, so each edge is compared with `startNode` before choosing `->` or `<-`.
+Without that the same line renders `Chennai headquartered in Freshworks`, which is false.
 
 **On hop depth.** The brief suggests 1–2 hops, but its own example question is a 3-hop chain
 (`Zoho → Chennai → Freshworks → Girish Mathrubootham`), as are two of the five questions here.
@@ -317,13 +336,17 @@ carries over into Assignment 11.
 
 | Stage | Where | File |
 |-------|-------|------|
-| 1. Generate synthetic dataset | Local (Ollama) | [Assignment10_dataset.py](Assignment10_dataset.py) |
-| 1b. Validate and filter it | Local | [Assignment10_validate.py](Assignment10_validate.py) |
-| 2. LoRA fine-tune | **Colab GPU** | [Assignment10_finetune.ipynb](Assignment10_finetune.ipynb) |
+| 1. Generate synthetic dataset | Local (Ollama) | [Assignment10_dataset.py](Assignment10_finetuned/Assignment10_dataset.py) |
+| 1b. Validate and filter it | Local | [Assignment10_validate.py](Assignment10_finetuned/Assignment10_validate.py) |
+| 2. LoRA fine-tune | **Colab GPU** | [Assignment10_finetune.ipynb](Assignment10_finetuned/Assignment10_finetune.ipynb) |
 | 3. Merge + quantize to GGUF | **Colab GPU** | same notebook |
-| 4. Register + compare | Local (Ollama) | [Assignment10_Modelfile](Assignment10_Modelfile), [Assignment10_compare.py](Assignment10_compare.py) |
+| 4. Register + compare | Local (Ollama) | [Assignment10_Modelfile](Assignment10_finetuned/Assignment10_Modelfile), [Assignment10_compare.py](Assignment10_finetuned/Assignment10_compare.py) |
+
+All five live in `Assignment10_finetuned/`, so run the commands below from inside that folder.
 
 ```bash
+cd Assignment10_finetuned
+
 python Assignment10_dataset.py     # generate  -> fastapi_dataset.json
 python Assignment10_validate.py    # filter, report which topics need refilling
 python Assignment10_dataset.py     # refill the short topics
@@ -352,12 +375,11 @@ Details worth noting:
   code block fails to parse; the generation prompt now names these specific mistakes, and the
   generator refills any topic left short.
 
-  After one generate → validate → refill → validate cycle the shipped dataset is **62 pairs,
-  0 contaminated, 16/16 topics covered, and all 28 code blocks parse** — against 51 pairs with 13
-  contaminated before. Naming the specific hallucinations in the prompt eliminated the fake
-  imports entirely on the second pass; the only remaining rejections were truncated code blocks.
-  This is the practical lesson of synthetic data: the teacher model sets the quality ceiling, and
-  nobody finds out where that ceiling is unless someone writes the check.
+  Naming the specific hallucinations in the prompt eliminated the fake imports entirely on the
+  next pass. The shipped dataset is now **74 pairs across 16/16 topics, 74/74 kept by the
+  validator, 0 rejected** — against 51 pairs with 13 contaminated before. This is the practical
+  lesson of synthetic data: the teacher model sets the quality ceiling, and nobody finds out
+  where that ceiling is unless someone writes the check.
 - **Generation is interruption-safe.** The run takes 15-30 minutes against a local model, so
   every call retries with backoff and the dataset is written after each topic. Re-running skips
   topics already in the output file. An earlier version saved only at the end and lost a whole
