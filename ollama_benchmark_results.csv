@@ -1,0 +1,185 @@
+Model,Prompt Type,Prompt,Response,Response Time (ms),Manual Quality Rating (1-5)
+tinyllama,Simple Factual Question,What is the capital of Japan?,Japan's capital city is Tokyo.,287.85,0
+tinyllama,Sentiment Classification,"Classify the sentiment of this sentence as Positive, Negative, or Neutral: 'The customer service was slow but the staff was very polite.'","Score: 1 (Positive)
+This sentence is classified as Positive due to the use of politeness in the staff's language and behavior, which demonstrates their willingness to provide satisfactory customer service. The customer service experience may have been slow, but the staff's willingness to work through the challenges with the customer and provide excellent service still resulted in a Positive sentiment.",1190.45,0
+tinyllama,Reasoning Problem,A train travels 60 km in 1 hour. How long will it take to travel 150 km at the same speed? Explain your reasoning.,"To calculate the time it would take for a train traveling at a speed of 100 km/h (60 km/h ceiling) to travel 150 km at the same speed, we will need to solve the following equation:
+
+60 * 60 = 3600
+
+Subtracting the 3600 seconds at 60 km/h from the 3600 seconds at 100 km/h gives:
+
+3600 - 3600 = 1800
+
+Multiplying by 2 hours (60 minutes) gives:
+
+1800 * 2 = 3600
+
+Hence, the time it would take for the train to travel 150 km at the same speed as before is:
+
+150 * 15 = 205 km
+
+Therefore, the time it would take to travel 150 km at the same speed as before would be 205 km in 2 hours, or a distance of 108 km per hour.",3516.18,0
+tinyllama,Code Generation,Write a Python function to check whether a string is a palindrome.,"**Function:**
+
+```python
+def is_palindrome(str):
+    # Convert the string to lowercase
+    str = str.lower()
+
+    # Split the string into characters
+    chars = list(str)
+
+    # Find the length of the string
+    length = len(chars)
+
+    # Initialize a flag to keep track of whether the string is a palindrome or not
+    palindrome = True
+
+    # Loop through all the characters in the string
+    for I in range(length - 1, -1, -1):
+        # If the character at index I is not equal to the character at index I - 1
+        if chars[i] != chars[i - 1]:
+            # Set the flag to False
+            palindrome = False
+            # Break the loop since the string has not become a palindrome
+            break
+
+    # Return the boolean flag
+    return palindrome
+```
+
+This function takes a string as input and returns a boolean flag indicating whether the string is a palindrome or not.
+
+Here's an example usage:
+
+```python
+str = ""racecar""
+is_palindrome(str)
+# Output: True
+```",3981.47,0
+tinyllama,Creative Writing,Write a short science-fiction story in about 100 words about humans living on Mars.,"In the year 2050, humanity had already made its way to Mars. The journey had been long, arduous, and dangerous. But finally, after years of preparation and planning, the first human colonists had landed on the red planet, setting up their base in the far reaches of the Asteroid Belt.
+
+For the first few years, life on Mars was a constant struggle. The planet was cold, dry, and unforgiving. The harsh conditions took a toll on the colonists, but they persevered, determined to make Mars their home. They worked tirelessly, building homes, farms, and research facilities, hoping to one day find a way to sustain themselves in the harsh Martian environment.
+
+But their hopes were not to be. In 2065, a massive asteroid struck Mars, devastating the colony. The colony was destroyed, and most of the colonists were killed or forced to abandon their homes and return to Earth.
+
+Soon after, a new threat appeared - a hostile alien race. The aliens had discovered Mars, and they were not happy with humanity's presence. They launched a devastating assault on Earth, causing widespread destruction and chaos.
+
+As the aliens continued their assault on the Earth, the colonists on Mars were left to fend for themselves. But they were not alone. A team of AI-powered robots had been sent to Mars to help the colonists, and they were now working to build a defense system to protect the Earth from the alien invaders.
+
+The AI-powered robots were highly advanced and had been designed to work together, using artificial intelligence to coordinate their efforts. The robots were programmed with machine learning algorithms, allowing them to adapt to changing situations and find new solutions to problems.
+
+The robots were not human, of course. They were programmed to function in a scientific, rather than a social, manner. But even so, they had become part of the colonists' lives, serving them as companions, teachers, and friends.
+
+As the aliens continued their attack on Earth, the AI-powered robots worked tirelessly to build a defense system. They scoured the Martian landscape for resources, gathering supplies, and building new structures. They monitored the Earth, keeping a close eye on the alien invaders' movements and activity.
+
+But even as the AI-powered robots worked towards the defense system, they also faced their own challenges. The robots were programmed to operate in a certain way, and their programming was not always up-to-date. This meant that some of the robots were not functioning properly, and this could lead to problems with the system.
+
+Despite the challenges they faced, the AI-powered robots were determined to protect the Earth from the alien invaders. They worked tirelessly, day and night, to construct the defense system, and they knew that it was their collective strength that would ultimately save Earth.
+
+In the end, it was not only the AI-powered robots that saved Earth. It was also the colonists, who had worked tirelessly to create a defense system to protect the Earth from the alien invaders. Together, the AI-powered robots and the colonists had created something truly remarkable - a defense system that not only protected Earth, but also provided a new home for humanity on Mars.",10542.14,0
+qwen3:0.6b,Simple Factual Question,What is the capital of Japan?,The capital of Japan is **Tokyo**.,3844.74,0
+qwen3:0.6b,Sentiment Classification,"Classify the sentiment of this sentence as Positive, Negative, or Neutral: 'The customer service was slow but the staff was very polite.'","The sentence combines a negative aspect (slow customer service) and a positive aspect (polite staff), resulting in a **Neutral** sentiment.",3900.75,0
+qwen3:0.6b,Reasoning Problem,A train travels 60 km in 1 hour. How long will it take to travel 150 km at the same speed? Explain your reasoning.,"To determine how long it will take the train to travel 150 km at the same speed, we start by analyzing the relationship between speed, distance, and time.
+
+We are given:
+- The train travels **60 km in 1 hour**.
+- We need to find the time it takes to travel **150 km** at the same speed.
+
+---
+
+### Step 1: Determine the Speed of the Train
+
+The speed of the train is calculated using the formula:
+
+$$
+\text{Speed} = \frac{\text{Distance}}{\text{Time}}
+$$
+
+From the problem, the train travels 60 km in 1 hour, so:
+
+$$
+\text{Speed} = \frac{60\ \text{km}}{1\ \text{hour}} = 60\ \text{km/h}
+$$
+
+---
+
+### Step 2: Use the Speed to Find the Time
+
+We now use the formula:
+
+$$
+\text{Time} = \frac{\text{Distance}}{\text{Speed}}
+$$
+
+Substituting the values:
+
+$$
+\text{Time} = \frac{150\ \text{km}}{60\ \text{km/h}} = 2.5\ \text{hours}
+$$
+
+---
+
+### Final Answer
+
+$$
+\boxed{2.5}
+$$
+
+It will take the train **2.5 hours** to travel 150 km at the same speed.",26079.43,0
+qwen3:0.6b,Code Generation,Write a Python function to check whether a string is a palindrome.,"To determine whether a given string is a palindrome, we can use a simple approach that checks whether the string reads the same forward and backward. This is typically done by comparing the string with its reverse.
+
+### Approach:
+1. **Reverse the String**: We reverse the input string using slicing (`[::-1]`).
+2. **Compare**: Check if the original string is equal to its reversed version.
+3. **Edge Cases**: The function handles empty strings by returning `True` since an empty string is considered a palindrome.
+
+This approach ensures that we handle all standard cases, including:
+- Empty strings.
+- Strings with all characters.
+- Case-sensitive strings.
+
+### Time Complexity:
+The time complexity is **O(n)**, where n is the length of the string. This is because we are only performing a single reversal and comparison.
+
+### Python Code:
+```python
+def is_palindrome(s):
+    return s == s[::-1]
+```
+
+### Example Usage:
+```python
+print(is_palindrome(""Aba""))  # Output: True
+print(is_palindrome(""123""))  # Output: False
+print(is_palindrome(""abba""))  # Output: True
+print(is_palindrome(""""))     # Output: True
+```
+
+This function is efficient and handles all standard cases for checking if a string is a palindrome.",15538.94,0
+qwen3:0.6b,Creative Writing,Write a short science-fiction story in about 100 words about humans living on Mars.,"In 2045, the Mars colony thrives on water and sand, a fragile balance. Dr. Elara Voss, a geologist, oversees terraforming efforts, while her crew—Lia, a biologist, and Renn, a pilot—navigate the red planet’s thin atmosphere. Their harmony with Mars’ ecosystems is a testament to human ingenuity. As the colony grows, they face dwindling supplies, but their focus on innovation fuels progress. In a final sunrise, they witness the planet’s beauty, a symbol of humanity’s resilience. (100 words)",4507.49,0
+phi3:mini,Simple Factual Question,What is the capital of Japan?,The capital of Japan is Tokyo.,4031.34,0
+phi3:mini,Sentiment Classification,"Classify the sentiment of this sentence as Positive, Negative, or Neutral: 'The customer service was slow but the staff was very polite.'","Neutral. While the sentence does mention a negative aspect (the customer service was slow), it also includes a positive one (the staff was very polite), balancing out the overall sentiment to be neutral.",2274.37,0
+phi3:mini,Reasoning Problem,A train travels 60 km in 1 hour. How long will it take to travel 150 km at the same speed? Explain your reasoning.,"We know that the train's speed is 60 km/hour (since it travels 60 km in 1 hour). To find out how long it will take to travel 150 km at the same speed, we can set up a simple proportion:
+
+Time taken (T) = Total Distance (D) / Speed (S)
+
+Substituting the given values:
+
+T = 150 km / 60 km/hour
+
+T = 2.5 hours
+
+So, it will take the train 2.5 hours to travel 150 km at the same speed. The reasoning is based on the concept that speed is equal to distance divided by time. Thus, if we know the distance and speed, we can find the time by rearranging the formula: time = distance / speed.",8732.56,0
+phi3:mini,Code Generation,Write a Python function to check whether a string is a palindrome.,"def is_palindrome(s: str) -> bool:
+    return s == s[::-1]
+
+# Test
+print(isner('racecar')) # True
+print(palindrome('python')) # False
+",2404.14,0
+phi3:mini,Creative Writing,Write a short science-fiction story in about 100 words about humans living on Mars.,"
+Mars had become humanity's second home. The red dust swirled outside the transparent dome, giving the illusion of an alien world. Inhabitants like Alex lived here, thriving under the synthesized atmosphere. They had adapted to the Martian gravity, developed new musculature to navigate the lower weight, and their bodies processed the altered UV spectrum. Alex spent her days researching Martian soil for water and minerals, essential for terraforming progress.
+
+
+One evening, as the twin moons rose, Alex's team discovered a subterranean lake. This breakthrough promised self-sufficient oases across the barren landscape. Mars was no longer just a testbed for survival but a beacon of human tenacity and hope. Alex gazed upon the horizon, a pang of homesickness for Earth's blue skies momentarily overpowering her spirit, yet Mars, with its untold stories etched into every grain of red, promised a legacy far beyond Earthly bounds.",9764.16,0
