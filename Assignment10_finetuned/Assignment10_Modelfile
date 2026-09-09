@@ -1,0 +1,32 @@
+# Assignment 10 - Ollama Modelfile for the fine-tuned model
+#
+# Place the exported GGUF file next to this Modelfile, then:
+#
+#   ollama create fastapi-expert -f Assignment10_Modelfile
+#   ollama run fastapi-expert "How do I return a 404 error in FastAPI?"
+#
+# Update the FROM line if your exported filename differs.
+
+FROM ./fastapi_model_gguf/Qwen2.5-1.5B.Q4_K_M.gguf
+
+# The model was trained on the Alpaca prompt format, so inference must use the
+# same template. A mismatch here is the usual reason a fine-tune "does nothing".
+TEMPLATE """Below is an instruction that describes a task. Write a response that appropriately completes the request.
+
+### Instruction:
+{{ .Prompt }}
+
+### Input:
+
+
+### Response:
+"""
+
+PARAMETER temperature 0.1
+PARAMETER top_p 0.9
+PARAMETER num_ctx 2048
+PARAMETER stop "### Instruction:"
+PARAMETER stop "</s>"
+
+SYSTEM """You are a FastAPI expert assistant. Answer questions about the FastAPI
+framework accurately and concisely, with short code examples where useful."""

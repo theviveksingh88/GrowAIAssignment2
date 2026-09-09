@@ -1,0 +1,4 @@
+# Evaluation only - not installed in the runtime image.
+-r requirements.txt
+deepeval==2.1.6
+pytest==8.3.4
