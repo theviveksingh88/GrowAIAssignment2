@@ -27,6 +27,7 @@ CORPUS_PATH = os.getenv("CORPUS_PATH", "corpus.txt")
 COLLECTION_NAME = "production_rag"
 
 SYSTEM_PROMPT = """Answer the question using ONLY the context below.
+Answer in one or two complete sentences.
 If the answer is not in the context, say exactly: "Not in context."
 
 Context:
@@ -53,30 +54,53 @@ def _embed(text):
     return response.json()["embedding"]
 
 
-def _chunk(text, chunk_size=300, overlap=50):
-    """Split text into overlapping character windows on word boundaries."""
+def _chunk(text, chunk_size=400, overlap_sentences=1):
+    """Split text into chunks that begin and end on sentence boundaries.
 
-    words = re.findall(r"\S+", text)
+    An earlier version cut on a fixed word count. That decapitated sentences:
+    the chunk retrieved for "What is deep learning?" started
+    "is a type of machine learning based on artificial neural networks...",
+    with the subject sliced off the front, and the model answered
+    "Deep learning." - supplying the missing subject instead of the definition.
+
+    Grouping whole sentences costs nothing and removes that failure entirely.
+    One sentence of overlap keeps context across the seam.
+    """
+
+    # Split after ., ! or ? when followed by whitespace. Good enough for prose;
+    # a production system would use a real sentence tokenizer.
+    sentences = [s.strip() for s in re.split(r"(?<=[.!?])\s+", text) if s.strip()]
+
+    if not sentences:
+        return []
 
     chunks = []
-    step = max(1, chunk_size - overlap)
+    current = []
+    length = 0
 
-    # Approximate: 5 characters per word, matching Assignment 6's 300/50 split.
-    words_per_chunk = max(1, chunk_size // 5)
-    words_step = max(1, step // 5)
+    for sentence in sentences:
 
-    for start in range(0, len(words), words_step):
-        chunk = " ".join(words[start:start + words_per_chunk])
-        if chunk:
-            chunks.append(chunk)
-        if start + words_per_chunk >= len(words):
-            break
+        if current and length + len(sentence) > chunk_size:
+            chunks.append(" ".join(current))
+            # Carry the tail sentences forward so meaning is not split at the seam.
+            current = current[-overlap_sentences:] if overlap_sentences else []
+            length = sum(len(s) + 1 for s in current)
+
+        current.append(sentence)
+        length += len(sentence) + 1
+
+    if current:
+        chunks.append(" ".join(current))
 
     return chunks
 
 
 def init_index():
-    """Create the collection and index the corpus if it is empty."""
+    """Create the collection and index the corpus if it is empty.
+
+    Safe to call repeatedly: if the collection already holds documents it
+    returns immediately.
+    """
 
     global _collection
 
@@ -101,11 +125,43 @@ def init_index():
     return _collection.count()
 
 
+def ensure_index():
+    """Build the index on demand, retrying if startup lost the race.
+
+    docker compose `depends_on` waits for the Chroma container to start, not
+    for it to accept connections, so the API can boot first and fail to index.
+    Retrying here means the service heals itself on the next request instead of
+    staying broken until someone restarts it.
+    """
+
+    global _collection
+
+    if _collection is not None:
+        return True
+
+    try:
+        init_index()
+        return True
+    except Exception:
+        return False
+
+
+def index_ready():
+    """True when the corpus is indexed and queryable."""
+
+    try:
+        return _collection is not None and _collection.count() > 0
+    except Exception:
+        return False
+
+
 def retrieve(query, top_k=3):
     """Return the top_k most similar chunks for a query."""
 
-    if _collection is None:
-        raise RuntimeError("Index not initialised - call init_index() first")
+    if not ensure_index():
+        raise RuntimeError(
+            "Vector index unavailable - Chroma is not reachable"
+        )
 
     results = _collection.query(
         query_embeddings=[_embed(query)],
@@ -190,7 +246,7 @@ async def answer_stream(query, top_k=3):
 def health():
     """Report reachability of both dependencies."""
 
-    status = {"ollama": False, "chroma": False}
+    status = {"ollama": False, "chroma": False, "index": False}
 
     try:
         httpx.get(f"{OLLAMA_BASE_URL}/api/tags", timeout=5).raise_for_status()
@@ -203,5 +259,12 @@ def health():
         status["chroma"] = True
     except Exception:
         pass
+
+    # Reachability is not readiness. The API can talk to Chroma and still be
+    # unable to answer because the corpus was never indexed - which is exactly
+    # what happens when startup loses the race. Report that separately.
+    if status["chroma"]:
+        ensure_index()
+        status["index"] = index_ready()
 
     return status

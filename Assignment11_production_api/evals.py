@@ -22,6 +22,7 @@ Run:
 """
 
 import json
+import os
 
 from pydantic import BaseModel
 
@@ -46,7 +47,10 @@ import rag_backend
 class OllamaJudge(DeepEvalBaseLLM):
     """DeepEval judge backed by a local Ollama model."""
 
-    def __init__(self, model="llama3.2", base_url="http://localhost:11434"):
+    def __init__(self, model="llama3.2", base_url=None):
+        # Read the same env var rag_backend uses, so this works both on the
+        # host and inside the container, where localhost is not the host.
+        base_url = base_url or os.getenv("OLLAMA_BASE_URL", "http://localhost:11434")
         self.model = model
         self.base_url = base_url
 

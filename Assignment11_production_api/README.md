@@ -61,10 +61,23 @@ python client.py
 
 ## Run the evaluation suite
 
+Run it **inside the container**, not on the host — the host is Python 3.14 and
+`deepeval==2.1.6` requires <3.13, while an isolated venv pulls a `chromadb-client` on the v2 API
+against this 0.6.3 v1 server.
+
 ```bash
-pip install -r requirements-dev.txt
-python evals.py
+docker compose start
+
+docker exec assignment11-api pip install deepeval==2.1.6
+docker exec assignment11-api pip install \
+  "langchain>=0.3,<1.0" "langchain-core>=0.3,<0.4" "langchain-openai>=0.2,<0.3"
+
+docker cp evals.py assignment11-api:/app/evals.py
+docker exec assignment11-api python -u evals.py
 ```
+
+`-u` matters: without it Python buffers piped stdout and a working run looks hung. The setup
+survives `docker compose stop`/`start` but not `down`.
 
 Metrics: **Answer Relevancy**, **Faithfulness**, **Contextual Precision**, threshold 0.7.
 Two of the ten cases have no answer in the corpus, so a faithful system must decline rather

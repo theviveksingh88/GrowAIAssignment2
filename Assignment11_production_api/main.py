@@ -167,6 +167,8 @@ def health():
 
     status = rag_backend.health()
 
+    # Every dependency must be up AND the index must be queryable. Without the
+    # index check this endpoint returned "ok" while every /chat call failed.
     ready = all(status.values())
 
     return JSONResponse(
